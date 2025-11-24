@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect to HTTPS (Optional, Remove if not using HTTPS)
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Handle index.php removal
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [QSA,L]
+
+    # Set CORS headers (For API requests)
+    <IfModule mod_headers.c>
+        Header Set Access-Control-Allow-Origin "*"
+        Header Set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Header Set Access-Control-Allow-Headers "Content-Type, Authorization"
+    </IfModule>
+</IfModule>
