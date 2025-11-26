@@ -20,10 +20,10 @@ class ProductFactory extends Factory
             'product_image' => null,
             'sku' => $this->faker->unique()->bothify('SKU-###???'),
             'barcode' => $this->faker->unique()->ean13,
-            'category_id' => Category::factory(),
-            'unit_id' => Unit::factory(),
-            'warehouse_id' => Warehouse::factory(),
-            'brand_id' => Brand::factory(),
+            'category_id' => Category::inRandomOrder()->first()->id ?? Category::factory(),
+            'unit_id' => Unit::inRandomOrder()->first()->id ?? Unit::factory(),
+            'warehouse_id' => Warehouse::inRandomOrder()->first()->id ?? Warehouse::factory(),
+            'brand_id' => Brand::inRandomOrder()->first()->id ?? Brand::factory(),
             'qty_alert' => $this->faker->numberBetween(5, 20),
             'stock_quantity' => $this->faker->numberBetween(5, 20),
             'discount' => $this->faker->randomFloat(2, 0, 50),
@@ -34,4 +34,3 @@ class ProductFactory extends Factory
         ];
     }
 }
-

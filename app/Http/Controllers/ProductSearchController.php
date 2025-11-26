@@ -9,34 +9,38 @@ class ProductSearchController extends Controller
 {
     public function search(Request $request)
     {
-        $query = $request->input('query');
+        $query = $request->input('query', '');
+        $warehouseId = $request->input('warehouse_id', '');
 
-        if (!$query) {
-            return response()->json([
-                'status' => false,
-                'message' => "Search query is required.",
-                'data' => [],
-            ], 422);
+        $products = Product::query();
+
+        // Apply warehouse filter if provided
+        if ($warehouseId) {
+            $products->where('warehouse_id', $warehouseId);
         }
 
-        $products = Product::where('name', 'like', "%{$query}%")
-            ->orWhere('sku', 'like', "%{$query}%")
-            ->orWhere('barcode', 'like', "%{$query}%")
-            ->orWhereHas('category', function ($q) use ($query) {
-                $q->where('category_name', 'like', "%{$query}%");
-            })
-            ->orWhereHas('brand', function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%");
-            })
-            ->orWhereHas('unit', function ($q) use ($query) {
-                $q->where('symbol', 'like', "%{$query}%");
-            })
-            ->with(['category', 'brand', 'unit'])
-            ->get();
+        // Apply search query if provided
+        if ($query) {
+            $products->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('sku', 'like', "%{$query}%")
+                    ->orWhere('barcode', 'like', "%{$query}%")
+                    ->orWhereHas('category', function ($subQ) use ($query) {
+                        $subQ->where('category_name', 'like', "%{$query}%");
+                    })
+                    ->orWhereHas('brand', function ($subQ) use ($query) {
+                        $subQ->where('name', 'like', "%{$query}%");
+                    })
+                    ->orWhereHas('unit', function ($subQ) use ($query) {
+                        $subQ->where('symbol', 'like', "%{$query}%");
+                    });
+            });
+        }
+
+        $products = $products->with(['category', 'brand', 'unit', 'warehouse'])->get();
 
         if ($products->isEmpty()) {
-
-            return successResponse("No products found matching the query");
+            return successResponse("No products found", []);
         }
 
         return successResponse("Products retrieved successfully.", $products);

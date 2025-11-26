@@ -39,7 +39,6 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 
 // manager routes
 Route::middleware(['auth:sanctum', 'isManager'])->group(function () {
-    Route::apiResource("units", UnitController::class);
 
 
 });
@@ -55,6 +54,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('sales', SaleController::class);
     Route::post('import-products', [ProductImportController::class, 'import']);
     Route::get('/export', [ExportController::class, 'export']);
+    Route::apiResource("units", UnitController::class);
 
 
 

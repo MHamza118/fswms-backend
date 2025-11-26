@@ -13,9 +13,8 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        //
         $categories = Category::all();
-        return $categories;
+        return successResponse("Categories retrieved successfully.", ['categories' => $categories]);
     }
 
     /**

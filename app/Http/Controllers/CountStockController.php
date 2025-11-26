@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Unit;
 use App\Models\Warehouse;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class CountStockController extends Controller
@@ -11,24 +12,33 @@ class CountStockController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function countStock(Warehouse $warehouse)
+    public function countStock($warehouse)
 {
-    $stockData = $warehouse->products()
-        ->with('unit:id,symbol') // Load the unit relationship and fetch only id & name
-        ->select('name', 'stock_quantity', 'sku', 'unit_id') // Include unit_id for relationship mapping
-        ->get()
-        ->map(function ($product) {
-            return [
-                'name' => $product->name,
-                'stock_quantity' => $product->stock_quantity,
-                'sku' => $product->sku,
-                'symbol' => $product->unit ? $product->unit->symbol : null, // Get unit symbol if available
-            ];
-        });
+    $warehouseId = $warehouse;
+    $warehouseModel = Warehouse::find($warehouseId);
+
+    if (!$warehouseModel) {
+        return errorResponse("Warehouse not found", [], 404);
+    }
+
+    $products = Product::where('warehouse_id', $warehouseId)
+        ->with('unit:id,symbol')
+        ->select('id', 'name', 'stock_quantity', 'sku', 'unit_id', 'warehouse_id')
+        ->get();
+
+    $stockData = $products->map(function ($product) {
+        return [
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'stock_quantity' => $product->stock_quantity,
+            'sku' => $product->sku,
+            'symbol' => $product->unit ? $product->unit->symbol : null,
+        ];
+    });
 
     return successResponse("Stock data retrieved successfully.", [
-        'warehouse_id' => $warehouse->id,
-        'warehouse_name' => $warehouse->name,
+        'warehouse_id' => $warehouseModel->id,
+        'warehouse_name' => $warehouseModel->name,
         'products' => $stockData
     ]);
 }

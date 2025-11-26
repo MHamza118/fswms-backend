@@ -64,9 +64,28 @@ class UnitController extends Controller
     /**
      * Remove the specified unit from storage.
      */
-    public function destroy(Unit $unit)
+    public function destroy(Request $request, Unit $unit)
     {
+        // Step 1: Fetch associated products
+        $associatedProducts = $unit->products()->get();
+
+        // Step 2: If confirmation not sent, return products and confirmation message
+        if (!$request->has('confirm')) {
+            return successResponse("The following products will be deleted with this unit. Please confirm to proceed.", [
+                'unit' => $unit,
+                'products_to_be_deleted' => $associatedProducts,
+            ]);
+        }
+
+        // Step 3: Delete associated products
+        $unit->products()->delete();
+
+        // Step 4: Delete the unit itself
         $unit->delete();
-        return successResponse("Unit deleted successfully.", ['unit' => $unit]);
+
+        return successResponse("Unit and all associated products deleted successfully.", [
+            'deleted_unit' => $unit,
+            'deleted_products' => $associatedProducts,
+        ]);
     }
 }

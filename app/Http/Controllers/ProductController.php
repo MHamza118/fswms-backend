@@ -18,13 +18,17 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // return successResponse("Products retrieved successfully.", Product::all());
-        $products = Product::with(['category', 'deviceAttribute'])->get();
+        // Get pagination parameter, default to 10 items per page
+        $perPage = $request->input('per_page', 10);
+
+        // Paginate products with relationships
+        $paginatedProducts = Product::with(['category', 'unit', 'warehouse', 'brand', 'deviceAttribute'])
+            ->paginate($perPage);
 
         // Modify each product to include deviceAttribute only for 'laptop' or 'tablet' category
-        $products = $products->map(function ($product) {
+        $products = $paginatedProducts->getCollection()->map(function ($product) {
             $categoryName = strtolower($product->category->category_name ?? '');
 
             if (in_array($categoryName, ['laptop', 'tablet'])) {
@@ -36,7 +40,19 @@ class ProductController extends Controller
             return $product;
         });
 
-        return successResponse("Products retrieved successfully.", $products);
+        // Set the modified collection back to paginator
+        $paginatedProducts->setCollection($products);
+
+        // Return response with products and pagination info
+        return successResponse("Products retrieved successfully.", [
+            'products' => $products,
+            'pagination' => [
+                'current_page' => $paginatedProducts->currentPage(),
+                'last_page' => $paginatedProducts->lastPage(),
+                'per_page' => $paginatedProducts->perPage(),
+                'total' => $paginatedProducts->total(),
+            ]
+        ]);
     }
 
     /**
